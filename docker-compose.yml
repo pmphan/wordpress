@@ -1,4 +1,4 @@
-version: "3.9"
+version: "3.3"
 
 services:
   nginx:
@@ -34,7 +34,7 @@ services:
     volumes:
       - mysqldata:/var/lib/mysql
     environment:
-      MYSQL_RANDOM_ROOT_PASSWORD: yes
+      MYSQL_RANDOM_ROOT_PASSWORD: 1
       MYSQL_DATABASE: ${DB_NAME}
       MYSQL_USER: ${DB_USER}
       MYSQL_PASSWORD: ${DB_PASS}
