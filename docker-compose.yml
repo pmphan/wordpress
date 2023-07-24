@@ -1,0 +1,51 @@
+version: "3.9"
+
+services:
+  nginx:
+    image: nginx:1.25.1-alpine
+    container_name: nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    secrets:
+      - cert_file
+      - key_file
+    volumes:
+      - wordpress:/var/www/html
+      - ./nginx-templates:/etc/nginx/templates
+    environment:
+      NGINX_HOST: ${NGINX_HOST}
+
+  wordpress:
+    image: wordpress:6.2.2-fpm-alpine
+    container_name: wordpress
+    volumes:
+      - wordpress:/var/www/html
+    environment:
+      WORDPRESS_DB_HOST: mysql
+      WORDPRESS_DB_NAME: ${DB_NAME}
+      WORDPRESS_DB_USER: ${DB_USER}
+      WORDPRESS_DB_PASSWORD: ${DB_PASS}
+    restart: unless-stopped
+
+  mysql:
+    image: mysql:8.0.33
+    container_name: mysql
+    volumes:
+      - mysqldata:/var/lib/mysql
+    environment:
+      MYSQL_RANDOM_ROOT_PASSWORD: yes
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASS}
+    restart: unless-stopped
+
+volumes:
+  mysqldata:
+  wordpress:
+
+secrets:
+  cert_file:
+    file: /etc/letsencrypt/live/${NGINX_HOST}/fullchain.pem
+  key_file:
+    file: /etc/letsencrypt/live/${NGINX_HOST}/privkey.pem
