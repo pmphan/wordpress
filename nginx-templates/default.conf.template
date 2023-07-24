@@ -1,0 +1,66 @@
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+
+    server_name ${NGINX_HOST};
+
+    root /var/www/html;
+
+    index index.php index.html;
+    
+    ssl_certificate /run/secrets/cert_file;
+    ssl_certificate_key /run/secrets/key_file;
+
+    # Protection against XXS
+    add_header X-XSS-Protection "1; mode=block" always;
+    # No iframe
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    # No MIME-type sniffing
+    add_header X-Content-Type-Options "nosniff" always;
+    # Sent referrer in cross origin
+    add_header Referrer-Policy "strict-origin-when-cross-origin";
+    
+    location / {
+        try_files $uri $uri/ /index.php$args;
+    }
+
+    location ~ /\.ht {
+        deny all;
+    }
+    
+    location = /favicon.ico { 
+        log_not_found off;
+        access_log off; 
+    }
+
+    location = /robots.txt { 
+        allow all;
+        log_not_found off;
+        access_log off; 
+    }
+
+    location ~ \.php$ {
+        try_files $uri =404;
+        fastcgi_split_path_info ^(/wordpress)(/.*)$;
+        fastcgi_pass wordpress:9000;
+        fastcgi_index index.php;
+        include fastcgi_params;
+        fastcgi_intercept_errors on;
+        fastcgi_param  SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        fastcgi_param PATH_INFO $fastcgi_path_info;
+    }
+
+    location ~* \.(css|gif|ico|jpeg|jpg|js|png)$ {
+        expires max;
+        log_not_found off;
+    }
+}
+
+server {
+    listen 80;
+    listen [::]:80;
+
+    server_name ${NGINX_HOST};
+
+    return 301 https://${NGINX_HOST}$request_uri;
+}
